@@ -1,18 +1,22 @@
 import React, { useState } from "react";
 import { StyleSheet, View, ScrollView, Alert, Dimensions } from "react-native";
 import { Icon, Avatar, Image, Input, Button } from "react-native-elements";
+import * as Permissions from "expo-permissions";
+import * as ImagePicker from "expo-image-picker";
 
 export default function AddRestaurantForm(props) {
   const { toastRef, setIsLoading, navigation } = props;
   const [restaurantName, setRestaurantName] = useState("");
   const [restaurantAddress, setRestaurantAddress] = useState("");
   const [restaurantDescription, setRestaurantDescription] = useState("");
+  const [imagesSelected, setImagesSelected] = useState([]);
 
   const addRestaurant = () => {
     console.log("Ok");
-    console.log("restaurantName: " + restaurantName);
-    console.log("restaurantName: " + restaurantAddress);
-    console.log("restaurantName: " + restaurantDescription);
+    //console.log("restaurantName: " + restaurantName);
+    //console.log("restaurantName: " + restaurantAddress);
+    //console.log("restaurantName: " + restaurantDescription);
+    console.log(imagesSelected);
   };
 
   return (
@@ -22,7 +26,11 @@ export default function AddRestaurantForm(props) {
         setRestaurantAddress={setRestaurantAddress}
         setRestaurantDescription={setRestaurantDescription}
       />
-      <UploadImage />
+      <UploadImage
+        toastRef={toastRef}
+        imagesSelected={imagesSelected}
+        setImagesSelected={setImagesSelected}
+      />
       <Button
         title="Crear restaurante"
         onPress={addRestaurant}
@@ -60,9 +68,32 @@ function FormAdd(props) {
   );
 }
 
-function UploadImage() {
-  const imagenSelect = () => {
-    console.log("Imagen");
+function UploadImage(props) {
+  const { toastRef, imagesSelected, setImagesSelected } = props;
+  const imageSelect = async () => {
+    const resultPermissions = await Permissions.askAsync(
+      Permissions.CAMERA_ROLL
+    );
+
+    if (resultPermissions === "denied") {
+      toastRef.current.show(
+        "Es necesario los permisos de la galeria, si los has rechazado tienes que ir ha ajustes y activarlos manualmente.",
+        3000
+      );
+    } else {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        allowsEditing: true,
+        aspect: [4, 3],
+      });
+      if (result.cancelled) {
+        toastRef.current.show(
+          "Has cerrado la galeria sin seleccionar ninguna imagen",
+          2000
+        );
+      } else {
+        setImagesSelected([...imagesSelected, result.uri]);
+      }
+    }
   };
 
   return (
@@ -72,7 +103,7 @@ function UploadImage() {
         name="camera"
         color="#7a7a7a"
         containerStyle={styles.containerIcon}
-        onPress={imagenSelect}
+        onPress={imageSelect}
       />
     </View>
   );
